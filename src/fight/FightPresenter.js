@@ -83,6 +83,7 @@ export class FightPresenter {
         } else if (phase === PHASE.FIGHT && s.phaseTime === 0 && this.lastPhase === PHASE.ROUND_INTRO) {
             this.onBox();
         } else if (phase === PHASE.ROUND_END) {
+            if (round < s.rounds) this.camera.playShot({ type: 'wide', snap: 1.5 });
             this.hud.banner('END OF ROUND', { sub: 'ラウンド終了', duration: 2 });
             this.audio.play('cheer', { intensity: 0.5 });
         } else if (phase === PHASE.BREAK) {

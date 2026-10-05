@@ -89,9 +89,16 @@ export class FightCamera {
                 desired = new Vector3(-1.4 + ease * 2.8, 0.9 + ease * 1.1, -2.35 + ease * 0.25);
                 look = new Vector3(-0.4 + ease * 0.8, 1.25, 0);
             } else if (s.type === 'closeup') {
+                // Three-quarter front view from the camera's side of the fight line.
                 const f = s.subject.forward;
-                desired = subject.add(f.scale(1.35)).add(new Vector3(0, 1.55, 0)).add(perp.scale(0.35));
-                look = subject.add(new Vector3(0, 1.4, 0));
+                let side = new Vector3(f.z, 0, -f.x);
+                if (Vector3.Dot(side, this.pos.subtract(subject)) < 0) side = side.scale(-1);
+                desired = subject.add(side.scale(1.25)).add(f.scale(0.55)).add(new Vector3(0, 1.5, 0));
+                look = subject.add(new Vector3(0, 1.35, 0)).add(f.scale(0.2));
+            } else if (s.type === 'wide') {
+                // High establishing shot over the near ropes.
+                desired = new Vector3(Math.sin(this.time * 0.05) * 1.5, 3.9, -6.4);
+                look = new Vector3(0, 0.7, 0);
             }
             if (s.duration && s.t >= s.duration) this.shot = null;
             this.moveTo(desired, look, realDt, s.snap ?? 4);

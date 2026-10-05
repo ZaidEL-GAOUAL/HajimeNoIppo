@@ -1,8 +1,8 @@
 import {
-    TransformNode, MeshBuilder, Mesh, Color3, Color4, Quaternion, Vector3, Space, Scene, VertexBuffer,
+    TransformNode, MeshBuilder, Mesh, Color3, Color4, Quaternion, Vector3, Space, Scene, VertexBuffer, ParticleSystem,
 } from '@babylonjs/core/pure';
 import { createToonMaterial } from '../render/ToonMaterial.js';
-import { createShadowTexture } from '../render/ProceduralTextures.js';
+import { createShadowTexture, createDotTexture } from '../render/ProceduralTextures.js';
 import { createUnlitMaterial } from '../render/UnlitMaterial.js';
 import { Animator } from './Animator.js';
 
@@ -13,6 +13,7 @@ const OUTLINE_WIDTH = 0.009; // skinned mesh units are meters
 const SKIN_REFERENCE = '#e8c4a0';
 
 let shadowTexture = null;
+let auraTexture = null;
 
 /**
  * The visual side of a fighter: model instance, cel materials, gloves, animation blending and
@@ -64,6 +65,7 @@ export class FighterModel {
         this.proceduralGloves = this.modelGloves.length === 0;
         this.gloves = this.proceduralGloves ? [this.createGlove('Left'), this.createGlove('Right')] : this.modelGloves;
         this.createShadow();
+        this.createAura();
 
         this.guardPose = shared.guardPose;
         this.guardWeight = 0;
@@ -79,6 +81,7 @@ export class FighterModel {
         this.flashColor = new Color3(1, 1, 1);
         this._tmpQ = new Quaternion();
         this._right = new Vector3();
+        this._forward = new Vector3();
 
         this._observer = scene.onAfterAnimationsObservable.add(() => this.applyProcedural());
     }
@@ -200,6 +203,45 @@ export class FighterModel {
         this.shadow.position.y = 0.004;
     }
 
+    /** Anime fighting-spirit aura: rising embers around the body. */
+    createAura() {
+        auraTexture ??= createDotTexture(this.scene);
+        const ps = new ParticleSystem(`aura${this.index}`, 260, this.scene);
+        ps.particleTexture = auraTexture;
+        ps.emitter = this.root;
+        const { height, width } = this.data.build;
+        ps.minEmitBox = new Vector3(-0.32 * width, 0.05, -0.28 * width);
+        ps.maxEmitBox = new Vector3(0.32 * width, 1.75 * height, 0.28 * width);
+        const c = Color3.FromHexString(this.data.colors.aura ?? '#ff8a1f');
+        ps.color1 = new Color4(c.r, c.g, c.b, 0.9);
+        ps.color2 = new Color4(Math.min(1, c.r + 0.3), Math.min(1, c.g + 0.3), Math.min(1, c.b + 0.3), 0.7);
+        ps.colorDead = new Color4(c.r, c.g, c.b, 0);
+        ps.minSize = 0.05;
+        ps.maxSize = 0.16;
+        ps.minScaleY = 1.5;
+        ps.maxScaleY = 3;
+        ps.minLifeTime = 0.35;
+        ps.maxLifeTime = 0.8;
+        ps.direction1 = new Vector3(-0.15, 1, -0.15);
+        ps.direction2 = new Vector3(0.15, 1, 0.15);
+        ps.minEmitPower = 0.8;
+        ps.maxEmitPower = 2.0;
+        ps.gravity = new Vector3(0, 1.5, 0);
+        ps.blendMode = ParticleSystem.BLENDMODE_ADD;
+        ps.billboardMode = ParticleSystem.BILLBOARDMODE_STRETCHED;
+        ps.emitRate = 0;
+        ps.start();
+        this.aura = ps;
+        this.auraLevel = 0;
+    }
+
+    /** 0 = off, 1 = special ready, 2 = special active. */
+    setAura(level) {
+        if (level === this.auraLevel) return;
+        this.auraLevel = level;
+        this.aura.emitRate = [0, 70, 200][level] ?? 0;
+    }
+
     /** Capture arm rotations at a clip frame (used once to build the high-guard pose). */
     static captureGuardPose(model, clip, frame) {
         const g = model.groups[clip];
@@ -255,7 +297,7 @@ export class FighterModel {
         for (const mat of this.materials) mat.setColor4('flash', flash);
 
         const pitch = -this.fall * (Math.PI / 2 - 0.03);
-        Quaternion.RotationYawPitchRollToRef(0, pitch, this.lean, this.tilt.rotationQuaternion);
+        Quaternion.RotationYawPitchRollToRef(0, pitch, this.lean * 0.25, this.tilt.rotationQuaternion);
         this.tilt.position.y = Math.sin(this.fall * Math.PI / 2) * 0.16 * this.data.build.width;
 
         const hips = this.bones.Hips;
@@ -286,6 +328,12 @@ export class FighterModel {
         const yaw = this.root.rotation.y;
         this._right.set(Math.cos(yaw), 0, -Math.sin(yaw));
         if (Math.abs(this.headSnap.angle) > 0.001) this.bones.Neck?.rotate(this._right, this.headSnap.angle, Space.WORLD);
+        // Side lean / weave bends at the waist (most of it), the feet stay planted.
+        if (Math.abs(this.lean) > 0.001 && this.fall < 0.01) {
+            this._forward.set(Math.sin(yaw), 0, Math.cos(yaw));
+            this.bones.Spine?.rotate(this._forward, -this.lean * 0.45, Space.WORLD);
+            this.bones.Spine2?.rotate(this._forward, -this.lean * 0.35, Space.WORLD);
+        }
         if (Math.abs(this.bodyBend.angle) > 0.001) this.bones.Spine1?.rotate(this._right, this.bodyBend.angle, Space.WORLD);
     }
 
@@ -314,6 +362,7 @@ export class FighterModel {
         this.animator.stopAll();
         for (const g of Object.values(this.groups)) g.dispose();
         this.shadow.dispose();
+        this.aura.dispose(false);
         this.root.dispose(false, true);
     }
 }

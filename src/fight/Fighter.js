@@ -23,6 +23,13 @@ const RISE_TIME = 1.1;
 const PUNCH_BUFFER = 0.22;
 const SPIRIT_MAX = 100;
 
+function angleDiff(target, current) {
+    let d = target - current;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return d;
+}
+
 /**
  * Gameplay side of a boxer: state machine, stamina/health/spirit, movement and attack timing.
  * Updated at a fixed 60 Hz by the FightSession. Controllers (human or CPU) write `intent` and call press*().
@@ -183,6 +190,12 @@ export class Fighter {
                 if (this.stateTime >= RISE_TIME) this.toIdle();
                 break;
             case STATE.FROZEN:
+                if (this.walkTarget) {
+                    this.updateWalk(dt);
+                    break;
+                }
+                this.moveVel.scaleInPlace(Math.exp(-dt * 10));
+                break;
             case STATE.WIN:
                 this.moveVel.scaleInPlace(Math.exp(-dt * 10));
                 break;
@@ -194,7 +207,9 @@ export class Fighter {
             this.holdClip = null;
         }
         this.updateMovement(dt, moveScale);
-        if (!this.isDown && this.state !== STATE.WIN) this.faceOpponent(dt);
+        if (!this.isDown && this.state !== STATE.WIN && !this.walkTarget) this.faceOpponent(dt);
+        const specialActive = this.state === STATE.JOLT || (this.state === STATE.ATTACK && this.moveMods?.special);
+        this.model.setAura(this.isDown ? 0 : specialActive ? 2 : this.spiritFull ? 1 : 0);
         this.syncModel();
     }
 
@@ -279,6 +294,7 @@ export class Fighter {
 
     updateMovement(dt, moveScale) {
         const desired = new Vector3();
+        if (this.walkTarget && this.walkVel) desired.copyFrom(this.walkVel);
         if (moveScale > 0) {
             const fatigue = 0.75 + 0.25 * this.staminaRatio;
             const speed = this.data.stats.speed * fatigue * moveScale;
@@ -415,8 +431,34 @@ export class Fighter {
     freeze() {
         this.specialQueue = null;
         this.superArmor = false;
+        this.walkTarget = null;
         this.setState(STATE.FROZEN);
         this.model.play(CLIPS.idle.clip, { fade: 0.25 });
+    }
+
+    /** Between rounds: walk back to the corner and turn toward the ring. */
+    walkToCorner() {
+        this.freeze();
+        const s = this.index === 0 ? -1 : 1;
+        this.walkTarget = new Vector3(s * 2.45, 0, s * 2.45);
+        this.model.play(CLIPS.stepForward.clip, { speed: 1.6, fade: 0.25 });
+    }
+
+    updateWalk(dt) {
+        const to = this.walkTarget.subtract(this.position);
+        to.y = 0;
+        const dist = to.length();
+        if (dist < 0.08) {
+            // Arrived: face the center of the ring.
+            const face = Math.atan2(-this.position.x, -this.position.z);
+            this.yaw += angleDiff(face, this.yaw) * Math.min(1, dt * 6);
+            if (this.model.animator.current !== CLIPS.idle.clip) this.model.play(CLIPS.idle.clip, { fade: 0.3 });
+            this.walkVel = Vector3.Zero();
+            return;
+        }
+        const dir = to.scale(1 / dist);
+        this.walkVel = dir.scale(Math.min(1.1, dist * 3));
+        this.yaw += angleDiff(Math.atan2(dir.x, dir.z), this.yaw) * Math.min(1, dt * 8);
     }
 
     // ---- Being hit --------------------------------------------------------------------------------

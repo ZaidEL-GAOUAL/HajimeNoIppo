@@ -265,7 +265,11 @@ export class FightSession {
 
     endRound() {
         this.scoreRound();
-        for (const f of this.fighters) if (!f.isDown) f.freeze();
+        for (const f of this.fighters) {
+            if (f.isDown) continue;
+            if (this.round < this.rounds) f.walkToCorner();
+            else f.freeze();
+        }
         this.setPhase(PHASE.ROUND_END);
         this.events.emit('bell', { end: true });
     }
