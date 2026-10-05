@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SFX audition</title>
+    <style>
+        :root { --bg: #14151a; --panel: #1e2028; --line: #2e313c; --text: #e8e8ee; --dim: #9a9cab; --accent: #ff4d3d; --ok: #4cd18a; }
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, sans-serif; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 0 0 8px; }
+        .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        #status { padding: 2px 10px; border-radius: 999px; background: var(--line); color: var(--dim); font-size: 12px; }
+        #status.on { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+        section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+        .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+        button { background: #2a2d38; color: var(--text); border: 1px solid #3a3e4c; border-radius: 6px; padding: 7px 11px; font: inherit; cursor: pointer; }
+        button:hover { border-color: var(--accent); }
+        button:active { transform: translateY(1px); }
+        button.flash { background: var(--accent); border-color: var(--accent); }
+        label.row { display: grid; grid-template-columns: 90px 1fr 44px; align-items: center; gap: 8px; margin: 4px 0; }
+        label.row span:last-child { text-align: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+        input[type=range] { width: 100%; accent-color: var(--accent); }
+        input[type=text] { flex: 1; min-width: 0; background: #2a2d38; color: var(--text); border: 1px solid #3a3e4c; border-radius: 6px; padding: 7px; font: inherit; }
+        .line { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .hint { color: var(--dim); font-size: 12px; margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <h1>SFX audition</h1>
+        <span id="status">locked: click anywhere</span>
+        <p class="hint">Keys 1-9 / 0 play the impact row. All sounds are synthesized live (src/audio).</p>
+    </div>
+    <div class="grid">
+        <section>
+            <h2>Play options</h2>
+            <label class="row"><span>intensity</span><input id="intensity" type="range" min="0" max="1" step="0.01" value="0.5" /><span></span></label>
+            <label class="row"><span>pan</span><input id="pan" type="range" min="-1" max="1" step="0.01" value="0" /><span></span></label>
+            <label class="row"><span>rate</span><input id="rate" type="range" min="0.5" max="2" step="0.01" value="1" /><span></span></label>
+            <h2 style="margin-top: 12px">Volumes</h2>
+            <label class="row"><span>master</span><input data-vol="master" type="range" min="0" max="1" step="0.01" value="0.8" /><span></span></label>
+            <label class="row"><span>sfx</span><input data-vol="sfx" type="range" min="0" max="1" step="0.01" value="0.9" /><span></span></label>
+            <label class="row"><span>crowd</span><input data-vol="crowd" type="range" min="0" max="1" step="0.01" value="0.6" /><span></span></label>
+            <label class="row"><span>voice</span><input data-vol="voice" type="range" min="0" max="1" step="0.01" value="0.9" /><span></span></label>
+        </section>
+        <section id="groups"></section>
+        <section>
+            <h2>Crowd</h2>
+            <label class="row"><span>excitement</span><input id="excitement" type="range" min="0" max="1" step="0.01" value="0.2" /><span></span></label>
+            <div class="buttons">
+                <button id="crowdStart">Start crowd</button>
+                <button id="crowdStop">Stop crowd</button>
+                <button id="pause">Pause: off</button>
+            </div>
+            <h2 style="margin-top: 12px">Referee / announcer</h2>
+            <div class="buttons" id="counts"></div>
+            <div class="line"><button id="countAll">Count 1 to 10</button></div>
+            <div class="line">
+                <input id="announceText" type="text" value="Round one" />
+                <button id="announce">Announce</button>
+            </div>
+            <div class="buttons line" id="lines"></div>
+            <h2 style="margin-top: 12px">Demo</h2>
+            <div class="buttons"><button id="demo">Play exchange</button></div>
+        </section>
+    </div>
+    <script type="module" src="./sfx.js"></script>
+</body>
+</html>
