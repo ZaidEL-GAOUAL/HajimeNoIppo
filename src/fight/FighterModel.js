@@ -59,7 +59,9 @@ export class FighterModel {
         this.meshes = this.modelRoot.getChildMeshes(false);
         this.materials = [];
         this.applyMaterials(container);
-        this.gloves = [this.createGlove('Left'), this.createGlove('Right')];
+        // A model that ships its own gloves uses them; otherwise gloves are built on the hand bones.
+        this.proceduralGloves = this.modelGloves.length === 0;
+        this.gloves = this.proceduralGloves ? [this.createGlove('Left'), this.createGlove('Right')] : this.modelGloves;
         this.createShadow();
 
         this.guardPose = shared.guardPose;
@@ -106,19 +108,33 @@ export class FighterModel {
         hair.setColor4('tint', Color4.FromHexString(c.hair + 'ff'));
         const lashes = make('lashes', { alphaCutoff: 0.5, backFaceCulling: false, rim: 0 });
 
+        const gloves = make('gloves', { rim: 0.7, spec: 0.55 });
+        gloves.setColor4('tint', Color4.FromHexString(c.gloves + 'ff'));
+        const wraps = make('wraps', { rim: 0.3 });
+        wraps.setColor4('tint', Color4.FromHexString('#f2f2f2ff'));
+        this.modelGloves = [];
+
+        // Mesh roles come from their names, so a new model only has to follow the naming in docs/ART_BRIEF.md.
+        const hairVariants = this.meshes.filter((m) => /hair_\w+/i.test(m.name));
+        const wantedHair = hairVariants.find((m) => m.name.toLowerCase().endsWith(`hair_${this.data.id}`)) ?? hairVariants[0];
         for (const mesh of this.meshes) {
-            const name = mesh.name;
+            const name = mesh.name.toLowerCase();
             let mat = skin;
             let outline = true;
-            if (name.endsWith('Hoody')) mat = top;
-            else if (name.endsWith('Pants')) mat = bottom;
-            else if (name.endsWith('Sneakers')) mat = shoes;
-            else if (name.endsWith('Hair')) {
-                mat = hair;
-                outline = false;
-            } else if (name.endsWith('Eyelashes')) {
+            if (/glove/.test(name)) {
+                mat = gloves;
+                this.modelGloves.push(mesh);
+            } else if (/wrap|tape/.test(name)) mat = wraps;
+            else if (/hood|shirt|top|tank|robe|jacket/.test(name)) mat = top;
+            else if (/pant|trunk|short/.test(name)) mat = bottom;
+            else if (/shoe|sneaker|boot/.test(name)) mat = shoes;
+            else if (/lash|brow/.test(name)) {
                 mat = lashes;
                 outline = false;
+            } else if (/hair/.test(name)) {
+                mat = hair;
+                outline = false;
+                if (hairVariants.includes(mesh) && mesh !== wantedHair) mesh.setEnabled(false);
             }
             mesh.material = mat;
             mesh.isPickable = false;
@@ -129,6 +145,8 @@ export class FighterModel {
                 mesh.outlineColor = new Color3(0.02, 0.02, 0.05);
             }
         }
+        const isLeft = (m) => (/left|_l\b|\.l\b/i.test(m.name) ? 1 : 0);
+        this.modelGloves.sort((a, b) => isLeft(b) - isLeft(a));
     }
 
     createGlove(side) {
@@ -257,9 +275,11 @@ export class FighterModel {
 
     /** Runs right after the clips are evaluated, before rendering. */
     applyProcedural() {
-        for (const f of FINGER_ROOTS) {
-            this.bones[`Left${f}`]?.scaling.setAll(0.35);
-            this.bones[`Right${f}`]?.scaling.setAll(0.35);
+        if (this.proceduralGloves) {
+            for (const f of FINGER_ROOTS) {
+                this.bones[`Left${f}`]?.scaling.setAll(0.35);
+                this.bones[`Right${f}`]?.scaling.setAll(0.35);
+            }
         }
         if (this.guardWeight > 0.001 && this.guardPose) {
             for (const name of GUARD_BONES) {
@@ -278,8 +298,14 @@ export class FighterModel {
     }
 
     getGlovePosition(side) {
+        if (!this.proceduralGloves) return this.getBonePosition(side === 'left' ? 'LeftHand' : 'RightHand');
         const glove = this.gloves[side === 'left' ? 0 : 1];
         return glove.getBoundingInfo().boundingSphere.centerWorld;
+    }
+
+    /** Whether the model ships a given clip (block, knockedOut, getUp, victory are optional). */
+    has(clip) {
+        return !!this.groups[clip];
     }
 
     setVisible(visible) {

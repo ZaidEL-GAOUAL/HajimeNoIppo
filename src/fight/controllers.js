@@ -79,7 +79,9 @@ export class AIController {
         const opAttacking = op.state === STATE.ATTACK && !op.impactDone;
         if (opAttacking && this.lastOpponentState !== 'winding') {
             this.lastOpponentState = 'winding';
-            const inRange = dist < op.move.range * op.reach + 0.25;
+            // One decision per incoming punch: throw back into it (a counter attempt) or not.
+            this.willTrade = Math.random() < d.counter * 0.35;
+            const inRange = dist < (op.move.range + op.move.lunge) * op.reach + 0.2;
             if (inRange) {
                 this.reactTimer = d.reaction * (0.7 + Math.random() * 0.6);
                 const roll = Math.random();
@@ -125,7 +127,7 @@ export class AIController {
         const reach = me.reach;
         const preferred = p.range * reach + (lowHealth ? 0.25 : 0) + (tired ? 0.3 : 0);
         // Throwing into an incoming punch is a deliberate counter attempt, not a habit.
-        const trading = opAttacking && Math.random() > d.counter * 0.35;
+        const trading = opAttacking && !this.willTrade;
         if (me.canAct && this.attackCooldown <= 0 && !tired && !trading) {
             const opener = this.pickOpener(dist, reach);
             if (opener) {
@@ -164,7 +166,7 @@ export class AIController {
     pickOpener(dist, reach) {
         const options = [];
         for (const [id, move] of Object.entries(MOVES)) {
-            if (dist <= move.range * reach - 0.02) options.push(id);
+            if (dist <= (move.range + move.lunge * 0.8) * reach - 0.02) options.push(id);
         }
         if (!options.length) return null;
         return options[Math.floor(Math.random() * options.length)];

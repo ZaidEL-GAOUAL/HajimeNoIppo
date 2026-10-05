@@ -15,9 +15,9 @@ const STADIUM_RING_PARTS = /^(Cube(_\d|\.00[1-8]_0)|Cylinder)/;
 
 // Recolors for the stadium's flat materials (toon-shaded, darker so the ring pops).
 const STADIUM_COLORS = {
-    'Material.038': new Color3(0.16, 0.17, 0.27), // seats
-    'Material.071': new Color3(0.09, 0.09, 0.11), // structure, catwalks
-    'Material.129': new Color3(0.07, 0.07, 0.09), // floor
+    'Material.038': new Color3(0.12, 0.12, 0.2), // seats
+    'Material.071': new Color3(0.06, 0.06, 0.08), // structure, catwalks
+    'Material.129': new Color3(0.05, 0.05, 0.07), // floor
     'Material.018': new Color3(0.1, 0.1, 0.12),
     'Material.004': new Color3(0.05, 0.05, 0.06),
     'Material.075': new Color3(0.75, 0.82, 1.0), // jumbotron screen
@@ -118,7 +118,7 @@ export class Arena {
                     rim: 0.15,
                     spec: 0,
                     emissive: isLamp || key === 'Material.075' ? 1 : 0,
-                    shade: new Color3(0.35, 0.35, 0.45),
+                    shade: new Color3(0.3, 0.3, 0.42),
                     backFaceCulling: false,
                 }));
             }
@@ -262,6 +262,7 @@ export class Arena {
             s.position.set(p.x, p.y + 0.42, p.z);
             s.width = 0.6;
             s.height = 0.9;
+            s.color.set(0.82, 0.82, 0.9, 1);
             const person = Math.floor(Math.random() * 8);
             s.cellIndex = person;
             this.crowd.push({ sprite: s, person, baseY: s.position.y, phase: Math.random() * Math.PI * 2, speed: 5 + Math.random() * 5, cheering: false });

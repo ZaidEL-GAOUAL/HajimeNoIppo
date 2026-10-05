@@ -34,10 +34,12 @@ const ANIMATION_IDS = {
     'Right pivot': 'pivotRight',
     'warm up': 'warmup',
 };
+// Clips already named with a game id are kept as-is (see docs/ART_BRIEF.md).
+const KNOWN_IDS = new Set([...Object.values(ANIMATION_IDS), 'block', 'knockedOut', 'getUp', 'victory', 'taunt', 'strafeLeft', 'strafeRight']);
 
 // These clips walk the hips away from the origin. The game moves the fighter itself,
 // so the horizontal part of that motion is flattened to the first key.
-const IN_PLACE = new Set(['stepForward', 'stepBack', 'dodge', 'pivotLeft', 'pivotRight']);
+const IN_PLACE = new Set(['stepForward', 'stepBack', 'dodge', 'pivotLeft', 'pivotRight', 'strafeLeft', 'strafeRight']);
 
 const mb = (path) => (statSync(path).size / 1e6).toFixed(2) + ' MB';
 
@@ -50,7 +52,7 @@ async function createIO() {
 
 function renameAndFilterAnimations(doc) {
     for (const anim of doc.getRoot().listAnimations()) {
-        const id = ANIMATION_IDS[anim.getName()];
+        const id = ANIMATION_IDS[anim.getName()] ?? (KNOWN_IDS.has(anim.getName()) ? anim.getName() : null);
         if (!id) {
             anim.dispose();
             continue;
@@ -98,7 +100,7 @@ function keepOnlyColorTextures(doc) {
 }
 
 async function boxer(io) {
-    const src = `${RAW}/BoxerAnimations.glb`;
+    const src = process.env.BOXER ?? `${RAW}/BoxerAnimations.glb`;
     const dst = `${OUT}/boxer.glb`;
     const doc = await io.read(src);
     renameAndFilterAnimations(doc);

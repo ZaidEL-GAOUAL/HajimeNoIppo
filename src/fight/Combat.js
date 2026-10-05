@@ -3,7 +3,7 @@ import { STATE } from './Fighter.js';
 
 const FACING_COS = Math.cos((42 * Math.PI) / 180);
 const GUARD_COS = Math.cos((80 * Math.PI) / 180);
-const DAMAGE_SCALE = 0.8;
+const DAMAGE_SCALE = 0.6;
 // A punch only counts as a counter if the victim was already committed to their own punch.
 const COUNTER_COMMIT = 0.06;
 

@@ -83,9 +83,11 @@ export class FightCamera {
                 desired = new Vector3(subject.x + Math.sin(ang) * r, s.type === 'ko' ? 1.0 : 1.6, subject.z - Math.cos(ang) * r);
                 look = subject.add(new Vector3(0, 0.45, 0));
             } else if (s.type === 'intro') {
-                const ang = -1.2 + s.t * 0.35;
-                desired = new Vector3(Math.sin(ang) * 5.2, 1.9 - s.t * 0.12, -Math.cos(ang) * 5.2);
-                look = new Vector3(0, 1.2, 0);
+                // Crane shot sweeping along the near side of the ring, inside the ropes.
+                const k = Math.min(1, s.t / (s.duration ?? 3));
+                const ease = k * k * (3 - 2 * k);
+                desired = new Vector3(-1.4 + ease * 2.8, 0.9 + ease * 1.1, -2.35 + ease * 0.25);
+                look = new Vector3(-0.4 + ease * 0.8, 1.25, 0);
             } else if (s.type === 'closeup') {
                 const f = s.subject.forward;
                 desired = subject.add(f.scale(1.35)).add(new Vector3(0, 1.55, 0)).add(perp.scale(0.35));

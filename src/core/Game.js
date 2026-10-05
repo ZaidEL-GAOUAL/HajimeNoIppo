@@ -119,7 +119,11 @@ export class Game {
             current?.dispose();
             const model = new FighterModel(this.scene, this.boxer, getFighter(id), i, this.shared, { alt });
             if (!this.shared.guardPose) {
-                this.shared.guardPose = FighterModel.captureGuardPose(model, GUARD_CLIP, GUARD_FRAME);
+                // An authored block clip wins over the peek-a-boo frame borrowed from the warm-up.
+                const block = model.groups.block;
+                this.shared.guardPose = block
+                    ? FighterModel.captureGuardPose(model, 'block', Math.round((block.from + block.to) / 2))
+                    : FighterModel.captureGuardPose(model, GUARD_CLIP, GUARD_FRAME);
                 model.guardPose = this.shared.guardPose;
             }
             this.models[i] = model;

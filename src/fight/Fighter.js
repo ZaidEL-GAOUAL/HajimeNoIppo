@@ -189,6 +189,10 @@ export class Fighter {
             default:
                 break;
         }
+        if (this.holdClip && this.isDown && this.stateTime >= this.holdClip.at) {
+            this.model.play(this.holdClip.clip, { frame: this.holdClip.frame, fade: 0 });
+            this.holdClip = null;
+        }
         this.updateMovement(dt, moveScale);
         if (!this.isDown && this.state !== STATE.WIN) this.faceOpponent(dt);
         this.syncModel();
@@ -230,9 +234,18 @@ export class Fighter {
         return this.intent.guard ? 0.5 : 1;
     }
 
-    updateAttack() {
+    updateAttack(dt) {
         const t = this.stateTime;
         const move = this.move;
+        // Step into the punch during the windup, but never through the opponent.
+        if (!this.impactDone && move.lunge && this.opponent) {
+            const gap = Vector3.Distance(this.position, this.opponent.position);
+            if (gap > move.range * this.reach * 0.82) {
+                const k = Math.min(1, t / this.impactAt);
+                const speed = (move.lunge / this.impactAt) * 2 * (1 - k);
+                this.position.addInPlace(this.forward.scale(speed * dt));
+            }
+        }
         if (!this.impactDone && t >= this.impactAt) {
             this.impactDone = true;
             this.events.emit('impact', { attacker: this, move, mods: this.moveMods });
@@ -310,7 +323,9 @@ export class Fighter {
                 clip = vf > 0 ? CLIPS.stepForward.clip : CLIPS.stepBack.clip;
                 rate = Math.min(2.4, Math.max(0.9, Math.abs(vf) / 0.55));
             } else {
-                clip = vr > 0 ? CLIPS.pivotRight.clip : CLIPS.pivotLeft.clip;
+                // The 2024 pivot clips dip into a crouch; shuffle with the step clip unless real strafes exist.
+                const strafe = vr > 0 ? 'strafeRight' : 'strafeLeft';
+                clip = this.model.has(strafe) ? strafe : CLIPS.stepForward.clip;
                 rate = Math.min(2.2, Math.max(1.0, Math.abs(vr) / 0.6));
             }
             this.model.leanTarget = -vr * 0.06;
@@ -473,10 +488,17 @@ export class Fighter {
         this.pushVel.copyFrom(away.scale(1.6));
         this.moveVel.setAll(0);
         this.setState(STATE.DOWN);
-        const c = CLIPS.hitHead;
-        this.model.play(c.clip, { from: c.start, to: c.end, frame: 16, fade: 0.08 });
         this.model.guardTarget = 0;
-        this.model.fallTarget = 1;
+        if (this.model.has('knockedOut')) {
+            // Authored fall: play it once, then hold the last frame.
+            const g = this.model.groups.knockedOut;
+            this.model.play('knockedOut', { fade: 0.08 });
+            this.holdClip = { clip: 'knockedOut', at: (g.to - g.from) / 60, frame: g.to - 1 };
+        } else {
+            const c = CLIPS.hitHead;
+            this.model.play(c.clip, { from: c.start, to: c.end, frame: 16, fade: 0.08 });
+            this.model.fallTarget = 1;
+        }
         this.events.emit('knockdown', { fighter: this });
     }
 
@@ -486,8 +508,14 @@ export class Fighter {
         this.health = this.maxHealth * ratio;
         this.stamina = Math.max(this.stamina, this.maxStamina * 0.5);
         this.setState(STATE.RISE);
+        this.holdClip = null;
         this.model.fallTarget = 0;
-        this.model.play(CLIPS.idle.clip, { fade: 0.5 });
+        if (this.model.has('getUp')) {
+            const g = this.model.groups.getUp;
+            this.model.play('getUp', { speed: (g.to - g.from) / 60 / RISE_TIME, fade: 0.1 });
+        } else {
+            this.model.play(CLIPS.idle.clip, { fade: 0.5 });
+        }
         this.events.emit('rise', { fighter: this });
     }
 
@@ -498,7 +526,7 @@ export class Fighter {
     celebrate() {
         this.setState(STATE.WIN);
         this.model.guardTarget = 0;
-        this.model.play(CLIPS.warmup.clip, { fade: 0.4 });
+        this.model.play(this.model.has('victory') ? 'victory' : CLIPS.warmup.clip, { fade: 0.4 });
     }
 
     /** Between rounds: partial recovery. */

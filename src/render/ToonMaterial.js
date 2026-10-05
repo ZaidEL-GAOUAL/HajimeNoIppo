@@ -88,7 +88,7 @@ export const ToonLighting = {
     shadeColor: new Color3(0.42, 0.42, 0.58),
     rimColor: new Color3(1.0, 0.9, 0.75),
     fogColor: new Color3(0.03, 0.03, 0.06),
-    fogDensity: 0.018,
+    fogDensity: 0.024,
 };
 
 const UNIFORMS = [
