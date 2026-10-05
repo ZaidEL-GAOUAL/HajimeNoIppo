@@ -1,6 +1,7 @@
 import '@fontsource/bangers/400.css';
 import '@fontsource/noto-sans-jp/900.css';
 import './styles/main.css';
+import './core/babylon.js';
 import { Game } from './core/Game.js';
 
 const game = new Game(document.getElementById('renderCanvas'), document.getElementById('ui'));

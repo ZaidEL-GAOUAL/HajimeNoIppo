@@ -1,4 +1,4 @@
-import { DynamicTexture, Texture } from '@babylonjs/core';
+import { DynamicTexture, Texture } from '@babylonjs/core/pure';
 
 // Every texture in the arena is painted at runtime on a 2D canvas: no image files to ship.
 
@@ -20,7 +20,9 @@ function makeTexture(name, scene, width, height, paint, { mipmaps = true, wrap =
 
 /** Ring canvas: cream mat, apron border, big center logo. */
 export function createCanvasTexture(scene, { size = 1024, insideRatio = 0.806 } = {}) {
-    const tex = makeTexture('canvasTex', scene, size, size, (ctx, w, h) => {
+    return makeTexture('canvasTex', scene, size, size, (ctx, w, h) => {
+        // Ground UVs put the canvas' top row toward -z; paint mirrored so the logo reads from the TV side.
+        ctx.setTransform(1, 0, 0, -1, 0, h);
         ctx.fillStyle = '#1d2a6b';
         ctx.fillRect(0, 0, w, h);
         const inset = (w * (1 - insideRatio)) / 2;
@@ -64,10 +66,7 @@ export function createCanvasTexture(scene, { size = 1024, insideRatio = 0.806 } 
             ctx.fillText('KAMOGAWA BOXING GYM', 0, h / 2 - inset / 2);
             ctx.restore();
         }
-    }, { wrap: true });
-    // Ground UVs run toward -z for the canvas' top row; flip so the logo reads upright from the TV side.
-    tex.vScale = -1;
-    return tex;
+    });
 }
 
 /** Ring skirt banner, tiled around the platform. */

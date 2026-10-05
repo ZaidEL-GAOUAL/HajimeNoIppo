@@ -1,4 +1,9 @@
-import { ShaderMaterial, ShaderStore, Color3, Color4, Vector3 } from '@babylonjs/core';
+import { ShaderMaterial, ShaderStore, Color3, Color4, Vector3 } from '@babylonjs/core/pure';
+// Shader chunks used below (registered explicitly because Babylon is imported side-effect free).
+import '@babylonjs/core/Shaders/ShadersInclude/bonesDeclaration';
+import '@babylonjs/core/Shaders/ShadersInclude/bonesVertex';
+import '@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration';
+import '@babylonjs/core/Shaders/ShadersInclude/instancesVertex';
 
 // Cel shader used by everything in the arena: hard light/shadow terminator, a thin highlight
 // band and a view-dependent rim light. Works on skinned meshes (fighters) and static ones.

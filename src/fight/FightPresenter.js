@@ -1,4 +1,4 @@
-import { Color3, Vector3 } from '@babylonjs/core';
+import { Color3, Vector3 } from '@babylonjs/core/pure';
 import { PHASE } from './FightSession.js';
 
 const ROUND_WORDS = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];

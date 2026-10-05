@@ -1,4 +1,4 @@
-import { Vector3 } from '@babylonjs/core';
+import { Vector3 } from '@babylonjs/core/pure';
 import { MOVES, CLIPS, impactTime, totalTime } from './moves.js';
 import { RING } from '../core/constants.js';
 

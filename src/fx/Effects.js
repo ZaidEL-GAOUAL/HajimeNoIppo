@@ -1,8 +1,9 @@
 import {
-    DefaultRenderingPipeline, PostProcess, Effect, MeshBuilder, StandardMaterial, Color3, Color4, Vector3, Vector2,
+    DefaultRenderingPipeline, PostProcess, Effect, MeshBuilder, Color3, Color4, Vector3, Vector2,
     ParticleSystem, Mesh, Matrix, Scene,
-} from '@babylonjs/core';
+} from '@babylonjs/core/pure';
 import { createImpactTexture, createDotTexture } from '../render/ProceduralTextures.js';
+import { createUnlitMaterial } from '../render/UnlitMaterial.js';
 
 Effect.ShadersStore.animeFragmentShader = /* glsl */ `
 precision highp float;
@@ -99,14 +100,7 @@ export class Effects {
         const scene = this.scene;
         const tex = createImpactTexture(scene);
         for (let i = 0; i < 8; i++) {
-            const mat = new StandardMaterial(`sparkMat${i}`, scene);
-            mat.diffuseTexture = tex;
-            mat.diffuseTexture.hasAlpha = true;
-            mat.useAlphaFromDiffuseTexture = true;
-            mat.emissiveColor = Color3.White();
-            mat.disableLighting = true;
-            mat.backFaceCulling = false;
-            mat.disableDepthWrite = true;
+            const mat = createUnlitMaterial(`sparkMat${i}`, scene, { texture: tex });
             const plane = MeshBuilder.CreatePlane(`spark${i}`, { size: 1 }, scene);
             plane.material = mat;
             plane.billboardMode = Mesh.BILLBOARDMODE_ALL;
@@ -166,7 +160,7 @@ export class Effects {
         const s = this.sparks.find((x) => x.life <= 0) ?? this.sparks[0];
         s.mesh.position.copyFrom(point);
         s.mesh.rotation.z = Math.random() * Math.PI * 2;
-        s.mat.emissiveColor = color;
+        s.mat.setColor3('color', color);
         s.life = life;
         s.max = life;
         s.size = size;
@@ -233,7 +227,7 @@ export class Effects {
             const t = 1 - s.life / s.max;
             const scale = s.size * (0.35 + 0.9 * Math.sqrt(t));
             s.mesh.scaling.setAll(scale);
-            s.mat.alpha = 1 - t * t;
+            s.mat.setFloat('alpha', 1 - t * t);
         }
     }
 

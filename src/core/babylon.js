@@ -1,0 +1,37 @@
+// The game imports Babylon classes from the side-effect-free `@babylonjs/core/pure` barrel so the bundle only
+// contains what is used (6.5 MB -> ~1 MB). These imports register the runtime features the game relies on.
+import '@babylonjs/core/Engines/engine';
+import '@babylonjs/core/Engines/Extensions/engine.dynamicTexture';
+import '@babylonjs/core/Engines/Extensions/engine.renderTarget';
+import '@babylonjs/core/Engines/Extensions/engine.alpha';
+import '@babylonjs/core/scene';
+import '@babylonjs/core/Misc/tools';
+import '@babylonjs/core/Loading/sceneLoader';
+import '@babylonjs/core/Animations/animation';
+import '@babylonjs/core/Animations/animatable';
+import '@babylonjs/core/Animations/animationGroup';
+import '@babylonjs/core/Bones/skeleton';
+import '@babylonjs/core/Materials/shaderMaterial';
+import '@babylonjs/core/Materials/standardMaterial';
+import '@babylonjs/core/Materials/Textures/texture';
+import '@babylonjs/core/Materials/Textures/dynamicTexture';
+import '@babylonjs/core/Meshes/abstractMesh';
+import '@babylonjs/core/Meshes/mesh';
+import '@babylonjs/core/Meshes/transformNode';
+import '@babylonjs/core/Meshes/instancedMesh';
+import '@babylonjs/core/Meshes/Builders/sphereBuilder';
+import '@babylonjs/core/Meshes/Builders/boxBuilder';
+import '@babylonjs/core/Meshes/Builders/cylinderBuilder';
+import '@babylonjs/core/Meshes/Builders/planeBuilder';
+import '@babylonjs/core/Meshes/Builders/groundBuilder';
+import '@babylonjs/core/Cameras/targetCamera';
+import '@babylonjs/core/Cameras/freeCamera';
+import '@babylonjs/core/Sprites/spriteManager';
+import '@babylonjs/core/Sprites/spriteSceneComponent';
+import '@babylonjs/core/Particles/particleSystem';
+import '@babylonjs/core/Particles/particleSystemComponent';
+import '@babylonjs/core/PostProcesses/postProcess';
+import '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline';
+import '@babylonjs/core/PostProcesses/RenderPipeline/postProcessRenderPipelineManagerSceneComponent';
+import '@babylonjs/core/Rendering/outlineRenderer';
+import '@babylonjs/loaders/glTF';

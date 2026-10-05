@@ -1,4 +1,4 @@
-import { Vector3 } from '@babylonjs/core';
+import { Vector3 } from '@babylonjs/core/pure';
 import { STATE } from './Fighter.js';
 
 const FACING_COS = Math.cos((42 * Math.PI) / 180);

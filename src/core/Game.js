@@ -1,5 +1,4 @@
-import { Engine, Scene, LoadAssetContainerAsync, Vector3 } from '@babylonjs/core';
-import '@babylonjs/loaders/glTF';
+import { Engine, Scene, LoadAssetContainerAsync, Vector3 } from '@babylonjs/core/pure';
 import { MeshoptCompression } from '@babylonjs/core/Meshes/Compression/meshoptCompression';
 import { Settings } from './Settings.js';
 import { Input } from './Input.js';

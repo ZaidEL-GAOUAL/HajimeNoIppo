@@ -1,8 +1,9 @@
 import {
-    TransformNode, MeshBuilder, Mesh, Color3, Color4, Quaternion, Vector3, Space, StandardMaterial, Scene, VertexBuffer,
-} from '@babylonjs/core';
+    TransformNode, MeshBuilder, Mesh, Color3, Color4, Quaternion, Vector3, Space, Scene, VertexBuffer,
+} from '@babylonjs/core/pure';
 import { createToonMaterial } from '../render/ToonMaterial.js';
 import { createShadowTexture } from '../render/ProceduralTextures.js';
+import { createUnlitMaterial } from '../render/UnlitMaterial.js';
 import { Animator } from './Animator.js';
 
 const BONE_NAME = /mixamorig\d*:(\w+)$/;
@@ -192,12 +193,7 @@ export class FighterModel {
 
     createShadow() {
         shadowTexture ??= createShadowTexture(this.scene);
-        const mat = new StandardMaterial(`shadowMat${this.index}`, this.scene);
-        mat.diffuseColor = Color3.Black();
-        mat.specularColor = Color3.Black();
-        mat.disableLighting = true;
-        mat.opacityTexture = shadowTexture;
-        mat.disableDepthWrite = true;
+        const mat = createUnlitMaterial(`shadowMat${this.index}`, this.scene, { texture: shadowTexture, color: Color3.Black() });
         this.shadow = MeshBuilder.CreateGround(`shadow${this.index}`, { width: 1.1, height: 1.1 }, this.scene);
         this.shadow.material = mat;
         this.shadow.isPickable = false;

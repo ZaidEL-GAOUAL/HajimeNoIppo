@@ -1,4 +1,4 @@
-import { Vector3, Matrix } from '@babylonjs/core';
+import { Vector3, Matrix } from '@babylonjs/core/pure';
 import { BINDINGS } from '../core/Input.js';
 
 const h = (html) => {

@@ -1,4 +1,4 @@
-import { FreeCamera, Vector3, Scalar } from '@babylonjs/core';
+import { FreeCamera, Vector3, Scalar } from '@babylonjs/core/pure';
 
 /**
  * Broadcast-style camera that keeps both boxers framed from the side (P1 on the left),

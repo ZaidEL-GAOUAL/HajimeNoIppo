@@ -1,7 +1,7 @@
 import {
     LoadAssetContainerAsync, MeshBuilder, Color3, Vector3, SpriteManager, Sprite, ShaderMaterial, ShaderStore,
     Constants, Scene, Mesh, TransformNode, InstancedMesh,
-} from '@babylonjs/core';
+} from '@babylonjs/core/pure';
 import { createToonMaterial, ToonLighting } from '../render/ToonMaterial.js';
 import {
     createCanvasTexture, createSkirtTexture, createCrowdTexture, createDotTexture, CROWD_CELL_W, CROWD_CELL_H,
@@ -96,11 +96,13 @@ export class Arena {
 
         const materials = new Map();
         const seatMeshes = [];
-        for (const mesh of container.meshes) {
+        // Copy: disposing a mesh removes it from the container's list.
+        for (const mesh of [...container.meshes]) {
             if (mesh === root) continue;
             mesh.isPickable = false;
+            // The stadium's own ring (instances included) is replaced by the procedural one.
             if (STADIUM_RING_PARTS.test(mesh.name) && !/^Cube\.0(09|10|11)/.test(mesh.name)) {
-                mesh.setEnabled(false);
+                mesh.dispose(false, false);
                 continue;
             }
             if (mesh instanceof InstancedMesh) {
@@ -128,7 +130,8 @@ export class Arena {
         for (const mat of container.materials) mat.dispose();
         for (const tex of container.textures) tex.dispose();
         root.computeWorldMatrix(true);
-        for (const mesh of container.meshes) {
+        for (const mesh of [...container.meshes]) {
+            if (mesh.isDisposed()) continue;
             mesh.computeWorldMatrix(true);
             mesh.freezeWorldMatrix();
         }
